@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PJ2 – AI-Powered Personal Wellness Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        fit: {
+                            purple: '#6366f1',
+                            purpleDark: '#4f46e5',
+                            purpleLight: '#eef2ff',
+                            bg: '#f8fafc',
+                            card: '#ffffff',
+                            text: '#0f172a',
+                            sub: '#64748b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #0f172a; min-height: 100vh; }
+        
+        .glass-panel {
+            background: #ffffff;
+            border-radius: 1.25rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+        }
+
+        .chart-card-title {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 1.05rem;
+        }
+
+        .nav-item.active {
+            background: #4f46e5;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+        }
+
+        .dark body, body.theme-dark { background-color: #0b0f19; color: #f8fafc; }
+        .dark .glass-panel, body.theme-dark .glass-panel {
+            background: #111827;
+            border-color: #374151;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6);
+            color: #f8fafc;
+        }
+        .dark .chart-card-title, body.theme-dark .chart-card-title {
+            color: #f8fafc;
+        }
+
+        body.theme-emerald { background-color: #064e3b; color: #ecfdf5; }
+        body.theme-emerald .glass-panel { background: #046c4e; border-color: #059669; }
+
+        body.theme-cyberpunk { background-color: #18002e; color: #f4f4f5; }
+        body.theme-cyberpunk .glass-panel { background: #2d0a4e; border-color: #ec4899; }
+
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 99px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-200 min-h-screen flex flex-col md:flex-row">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-100 sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+                    <defs>
+                        <linearGradient id="mobileGradBody" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#ff7e00" />
+                            <stop offset="50%" stop-color="#ffb700" />
+                            <stop offset="100%" stop-color="#d946ef" />
+                        </linearGradient>
+                        <linearGradient id="mobileGradWeight" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ff5252" />
+                            <stop offset="100%" stop-color="#7c3aed" />
+                        </linearGradient>
+                        <linearGradient id="mobileGradHead" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ffb700" />
+                            <stop offset="100%" stop-color="#ff7e00" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="18" y="26" width="12" height="34" rx="6" fill="url(#mobileGradWeight)" />
+                    <rect x="70" y="26" width="12" height="34" rx="6" fill="url(#mobileGradWeight)" />
+                    <rect x="26" y="38" width="48" height="6" rx="3" fill="#9333ea" />
+                    <path d="M 50 88 C 30 70 24 50 32 32 C 34 28 38 28 40 32 C 45 44 46 54 50 54 C 54 54 55 44 60 32 C 62 28 66 28 68 32 C 76 50 70 70 50 88 Z" fill="url(#mobileGradBody)" />
+                    <path d="M 50 54 C 44 40 40 34 35 34 C 33 34 32 36 34 40 C 38 52 44 62 50 68 C 56 62 62 52 66 40 C 68 36 67 34 65 34 C 60 34 56 40 50 54 Z" fill="#9333ea" opacity="0.6" />
+                    <circle cx="50" cy="46" r="11" fill="url(#mobileGradHead)" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-base leading-none text-slate-900" data-i18n="headerTitle">Emily's Wellness</h1>
+                <span class="text-xs text-indigo-600 font-medium" data-i18n="headerSub">Wellness Dashboard AI</span>
+            </div>
+        </div>
+        <button id="mobile-menu-btn" class="p-2 text-slate-600 hover:text-indigo-600 rounded-lg">
+            <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-100 transform -translate-x-full md:translate-x-0 transition-transform duration-200 flex flex-col justify-between p-4 shadow-sm">
+        <div class="flex flex-col h-full space-y-4">
+            <div class="flex items-center space-x-3 px-2 py-1">
+                <div class="w-10 h-10 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 100 100" class="w-full h-full filter drop-shadow-md">
+                        <defs>
+                            <linearGradient id="gradBody" x1="0%" y1="100%" x2="0%" y2="0%">
+                                <stop offset="0%" stop-color="#ff7e00" />
+                                <stop offset="50%" stop-color="#ffb700" />
+                                <stop offset="100%" stop-color="#d946ef" />
+                            </linearGradient>
+                            <linearGradient id="gradWeight" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#ff5252" />
+                                <stop offset="100%" stop-color="#7c3aed" />
+                            </linearGradient>
+                            <linearGradient id="gradHead" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffb700" />
+                                <stop offset="100%" stop-color="#ff7e00" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="18" y="26" width="12" height="34" rx="6" fill="url(#gradWeight)" />
+                        <rect x="70" y="26" width="12" height="34" rx="6" fill="url(#gradWeight)" />
+                        <rect x="26" y="38" width="48" height="6" rx="3" fill="#9333ea" />
+                        <path d="M 50 88 C 30 70 24 50 32 32 C 34 28 38 28 40 32 C 45 44 46 54 50 54 C 54 54 55 44 60 32 C 62 28 66 28 68 32 C 76 50 70 70 50 88 Z" fill="url(#gradBody)" />
+                        <path d="M 50 54 C 44 40 40 34 35 34 C 33 34 32 36 34 40 C 38 52 44 62 50 68 C 56 62 62 52 66 40 C 68 36 67 34 65 34 C 60 34 56 40 50 54 Z" fill="#9333ea" opacity="0.65" />
+                        <circle cx="50" cy="46" r="11" fill="url(#gradHead)" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-extrabold text-lg tracking-tight text-slate-900 leading-tight">FITNESS</h2>
+                    <span class="text-[10px] font-bold tracking-widest text-indigo-600 uppercase">WELLNESS AI</span>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin pr-1">
+                <a href="#overview" data-tab="overview" class="nav-item active flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-house w-5"></i>
+                    <span data-i18n="navOverview">Dashboard</span>
+                </a>
+                <a href="#analytics" data-tab="analytics" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-chart-simple w-5"></i>
+                    <span data-i18n="navAnalytics">Analytics</span>
+                </a>
+                <a href="#sleep" data-tab="sleep" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-moon w-5"></i>
+                    <span data-i18n="navSleep">Sleep</span>
+                </a>
+                <a href="#activity" data-tab="activity" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-person-running w-5"></i>
+                    <span data-i18n="navActivity">Activity</span>
+                </a>
+                <a href="#recovery" data-tab="recovery" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-heart-pulse w-5"></i>
+                    <span data-i18n="navRecovery">Recovery</span>
+                </a>
+                <a href="#stress" data-tab="stress" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-face-smile w-5"></i>
+                    <span data-i18n="navStress">Stress & Mood</span>
+                </a>
+                <a href="#hydration" data-tab="hydration" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-glass-water w-5"></i>
+                    <span data-i18n="navHydration">Hydration</span>
+                </a>
+                <a href="#weight" data-tab="weight" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-weight-scale w-5"></i>
+                    <span data-i18n="navWeight">Weight</span>
+                </a>
+                <a href="#goals" data-tab="goals" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-trophy w-5"></i>
+                    <span data-i18n="navGoals">Challenges</span>
+                </a>
+                <a href="#coach" data-tab="coach" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5"></i>
+                    <span data-i18n="navCoach">AI Coach</span>
+                </a>
+                <a href="#alerts" data-tab="alerts" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-bell w-5"></i>
+                    <span data-i18n="navAlerts">Alerts</span>
+                </a>
+                <a href="#reports" data-tab="reports" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-file-invoice w-5"></i>
+                    <span data-i18n="navReports">Reports</span>
+                </a>
+                <a href="#settings" data-tab="settings" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-gear w-5"></i>
+                    <span data-i18n="navSettings">Settings</span>
+                </a>
+            </nav>
+
+            <div class="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 flex flex-col space-y-3">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-crown text-amber-500"></i>
+                    <span class="text-xs font-bold text-slate-800" data-i18n="proAnalytics">Pro Analytics</span>
+                </div>
+                <p class="text-[11px] text-slate-500" data-i18n="proSub">Unlock Gemini 3 AI insights & automated reports.</p>
+                <button id="global-read-aloud-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 rounded-xl transition shadow-md shadow-indigo-200 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-volume-high"></i>
+                    <span data-i18n="readSummary">Read Briefing</span>
+                </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Emily" class="w-10 h-10 rounded-full border border-indigo-200">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-900">Emily Park</h4>
+                        <span class="text-[10px] text-slate-500" data-i18n="levelActive">Level 12 Active</span>
+                    </div>
+                </div>
+                <select id="lang-select" class="bg-slate-100 text-xs text-slate-700 font-semibold rounded-lg px-2 py-1 border border-slate-200">
+                    <option value="en">EN</option>
+                    <option value="hi">HI</option>
+                    <option value="es">ES</option>
+                    <option value="fr">FR</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Header & Dashboard -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto max-h-screen scrollbar-thin">
+
+        <header class="p-6 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-between sticky top-0 z-30 shadow-xs">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-900 flex items-center gap-2" id="welcome-msg">
+                    Good Morning, Emily! <span class="text-xl">💪</span>
+                </h1>
+                <p class="text-xs font-medium text-slate-400 mt-0.5" data-i18n="welcomeSub">Keep pushing your limits and stay consistent!</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="relative hidden sm:block">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
+                    <input type="text" placeholder="Search workouts, metrics..." class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl pl-8 pr-4 py-2 w-56 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl">
+                    <input type="date" id="date-start" value="2025-01-01" class="bg-white text-[11px] font-medium border border-slate-200 rounded-lg px-2 py-1 text-slate-700">
+                    <span class="text-xs text-slate-400">-</span>
+                    <input type="date" id="date-end" value="2025-12-31" class="bg-white text-[11px] font-medium border border-slate-200 rounded-lg px-2 py-1 text-slate-700">
+                    <button id="apply-custom-date" class="px-2 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700" data-i18n="apply">Apply</button>
+                </div>
+
+                <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+                    <button data-filter="7" class="filter-btn px-3 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-indigo-600" data-i18n="btn7d">7D</button>
+                    <button data-filter="30" class="filter-btn px-3 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-indigo-600" data-i18n="btn30d">30D</button>
+                    <button data-filter="365" class="filter-btn active px-3 py-1 rounded-lg text-xs font-bold bg-white text-indigo-600 shadow-sm" data-i18n="btnFullYear">2025</button>
+                </div>
+
+                <select id="theme-selector" class="bg-slate-50 border border-slate-200 text-xs font-semibold rounded-xl px-3 py-2 text-slate-700">
+                    <option value="light">Wellness Light</option>
+                    <option value="dark">SaaS Dark</option>
+                    <option value="emerald">Emerald</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="p-6 space-y-6 flex-1 bg-slate-50">
+
+            <!-- 1. OVERVIEW DASHBOARD TAB -->
+            <section id="tab-overview" class="tab-content block space-y-6">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="kpi-cards-container"></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Today's Workout Card -->
+                    <div class="glass-panel p-5 relative overflow-hidden flex flex-col justify-between min-h-[260px] bg-slate-900 text-white group">
+                        <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80" alt="Workout" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition duration-500">
+                        <div class="relative z-10 flex justify-between items-center">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300" data-i18n="todaysWorkout">Today's Workout</span>
+                            <button id="view-all-workouts-btn" class="text-xs text-indigo-300 hover:text-white font-semibold cursor-pointer transition" data-i18n="viewAll">View All</button>
+                        </div>
+                        <div class="relative z-10 my-4">
+                            <span id="active-workout-badge" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wide">Strength</span>
+                            <h3 id="active-workout-title" class="text-xl font-extrabold mt-2 text-white">Upper Body Strength</h3>
+                            <div class="flex items-center space-x-4 text-xs text-slate-300 mt-2 font-medium">
+                                <span><i class="fa-regular fa-clock mr-1 text-indigo-400"></i> <span id="active-workout-duration">45 min</span></span>
+                                <span><i class="fa-solid fa-gauge-high mr-1 text-amber-400"></i> <span id="active-workout-level">Medium</span></span>
+                                <span><i class="fa-solid fa-fire mr-1 text-rose-400"></i> <span id="active-workout-cals">320 kcal</span></span>
+                            </div>
+                        </div>
+                        <div class="relative z-10">
+                            <button id="start-workout-trigger" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center space-x-2">
+                                <i class="fa-solid fa-play text-xs"></i>
+                                <span data-i18n="startWorkoutBtn">Start Workout</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Goal Progress Doughnut Chart -->
+                    <div class="glass-panel p-5 lg:col-span-2 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <h3 class="font-extrabold text-slate-900 dark:text-slate-100 text-base" data-i18n="weeklyGoalProgress">Weekly Goal Progress</h3>
+                                <p class="text-xs text-slate-400" data-i18n="weeklyGoalSub">Target metrics achieved across active days</p>
+                            </div>
+                            <select id="overview-chart-metric" class="bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl px-3 py-1 text-slate-700 cursor-pointer">
+                                <option value="steps" data-i18n="optSteps">Steps Goal</option>
+                                <option value="sleep" data-i18n="optSleep">Sleep Goal</option>
+                                <option value="stress" data-i18n="optStress">Stress Balance</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center my-2">
+                            <div class="h-48 relative flex items-center justify-center">
+                                <canvas id="exerciseTypeChart"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                                    <span class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-none" id="goal-overall-pct">78%</span>
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-400 font-extrabold uppercase tracking-wider mt-1" id="goal-pct-label" data-i18n="goalProgress">Goal Progress</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 text-xs font-semibold" id="goal-metrics-breakdown">
+                                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 mr-2"></span> <span data-i18n="targetMetric">Target Goal Metric</span></span>
+                                    <span class="text-slate-900 dark:text-slate-100 font-bold" id="goal-metric-target">--</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span> <span data-i18n="currentAverage">Current Filter Average</span></span>
+                                    <span class="text-slate-900 dark:text-slate-100 font-bold" id="goal-steps-text">8,742 / 10,000</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span> <span data-i18n="activeDaysAchieved">Active Days Achieved</span></span>
+                                    <span class="text-slate-900 dark:text-slate-100 font-bold" id="goal-cals-text">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center space-x-2 font-medium" id="goal-feedback-banner">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                            <span id="goal-feedback-text">Great job! You are on track to meet your target goals.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Four Warm Coaching Messages -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 border-l-4 border-indigo-500 flex flex-col justify-between space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold" data-i18n="coachBadge1">Rest Insight</span>
+                            <i class="fa-solid fa-moon text-indigo-500"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200" data-i18n="coachTitle1">"A Little More Sleep Could Go a Long Way"</p>
+                        <span class="text-[11px] text-slate-400" data-i18n="coachDesc1">You're sleeping 6.5 hrs on average (vs 7.5 national). Why don't you go to bed 20-30 minutes earlier?</span>
+                    </div>
+
+                    <div class="glass-panel p-4 border-l-4 border-emerald-500 flex flex-col justify-between space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold" data-i18n="coachBadge2">Activity Badge</span>
+                            <i class="fa-solid fa-person-walking text-emerald-500"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200" data-i18n="coachTitle2">"Your Body Has Earned a Lighter Day"</p>
+                        <span class="text-[11px] text-slate-400" data-i18n="coachDesc2">You've been walking 8.4k steps and your daily steps have stayed consistently high. A gentle stretch day is well deserved!</span>
+                    </div>
+
+                    <div class="glass-panel p-4 border-l-4 border-rose-500 flex flex-col justify-between space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-[10px] font-bold" data-i18n="coachBadge3">Cardio Notice</span>
+                            <i class="fa-solid fa-heart-pulse text-rose-500"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200" data-i18n="coachTitle3">"Your Heart Finds Your Sleep Tess"</p>
+                        <span class="text-[11px] text-slate-400" data-i18n="coachDesc3">On days with shorter sleep, your resting heart rate tends to climb. 08-39 minutes earlier tonight?</span>
+                    </div>
+
+                    <div class="glass-panel p-4 border-l-4 border-amber-500 flex flex-col justify-between space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 text-[10px] font-bold" data-i18n="coachBadge4">Consistency</span>
+                            <i class="fa-solid fa-trophy text-amber-500"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200" data-i18n="coachTitle4">"Your Consistency Is Your Superpower"</p>
+                        <span class="text-[11px] text-slate-400" data-i18n="coachDesc4">Your workout totals have stayed impressively stable. Nothing is crucial like this index — +0.4 difference over time.</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Trend Line Chart -->
+                <div class="glass-panel p-6 border-2 border-indigo-100/60 dark:border-slate-700">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                        <div>
+                            <h3 class="chart-card-title flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-indigo-600"></i>
+                                <span data-i18n="timelineTitle">Activity & Recovery Daily Timeline</span>
+                            </h3>
+                            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400" data-i18n="timelineSub">High-definition daily steps, sleep score, and physical performance correlation</p>
+                        </div>
+                        <div class="flex items-center space-x-3 text-xs font-bold">
+                            <span class="flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-200/60">
+                                <span class="w-3 h-3 rounded-full bg-amber-500"></span> <span data-i18n="legendSteps">Steps Count</span>
+                            </span>
+                            <span class="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-200/60">
+                                <span class="w-3 h-3 rounded-full bg-indigo-600"></span> <span data-i18n="legendSleep">Sleep Score</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="h-80 w-full">
+                        <canvas id="overviewTrendChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. ANALYTICS TAB -->
+            <section id="tab-analytics" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold text-lg mb-4 text-slate-900 dark:text-slate-100" data-i18n="navAnalytics">Advanced Analytics</h3>
+                    <div class="overflow-x-auto scrollbar-thin">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800/80 text-slate-400 uppercase font-semibold">
+                                <tr>
+                                    <th class="p-3 rounded-l-lg">Time Frame</th>
+                                    <th class="p-3">Avg Steps</th>
+                                    <th class="p-3">Avg Sleep (hrs)</th>
+                                    <th class="p-3">Avg Sleep Score</th>
+                                    <th class="p-3">Avg Stress</th>
+                                    <th class="p-3">Avg HRV (ms)</th>
+                                    <th class="p-3">Avg Weight (kg)</th>
+                                    <th class="p-3 rounded-r-lg">Total Calories</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aggregation-table-body" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. SLEEP TAB -->
+            <section id="tab-sleep" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Avg Sleep Duration</span>
+                        <div class="text-2xl font-bold text-indigo-500 dark:text-indigo-400 mt-1" id="sleep-avg-hours">-- hrs</div>
+                        <span class="text-[11px] text-slate-500">Target: 7.5 - 8.5 hrs</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Avg Sleep Quality Score</span>
+                        <div class="text-2xl font-bold text-teal-500 dark:text-teal-400 mt-1" id="sleep-avg-score">-- / 100</div>
+                        <span class="text-[11px] text-slate-500">Based on depth & rhythm</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Avg Deep Sleep %</span>
+                        <div class="text-2xl font-bold text-purple-500 dark:text-purple-400 mt-1" id="sleep-avg-deep">--%</div>
+                        <span class="text-[11px] text-slate-500">Optimal: 15% - 25%</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Consistency Rating</span>
+                        <div class="text-2xl font-bold text-amber-500 dark:text-amber-400 mt-1" id="sleep-consistency">Moderate</div>
+                        <span class="text-[11px] text-slate-500">Bedtime variability: ±45m</span>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Sleep Quality & Deep Sleep % Trends</h3>
+                    <div class="h-72">
+                        <canvas id="sleepTrendChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. ACTIVITY TAB -->
+            <section id="tab-activity" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Total Steps Logged</span>
+                        <div class="text-2xl font-bold text-amber-500 dark:text-amber-400 mt-1" id="act-total-steps">0</div>
+                        <span class="text-[11px] text-slate-500" id="act-avg-steps">Avg: 0 steps/day</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Distance Covered</span>
+                        <div class="text-2xl font-bold text-teal-500 dark:text-teal-400 mt-1" id="act-total-distance">0 km</div>
+                        <span class="text-[11px] text-slate-500">Cumulative distance</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Active Calories Burned</span>
+                        <div class="text-2xl font-bold text-rose-500 dark:text-rose-400 mt-1" id="act-total-calories">0 kcal</div>
+                        <span class="text-[11px] text-slate-500">Includes active + basal</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Exercise Minutes</span>
+                        <div class="text-2xl font-bold text-purple-500 dark:text-purple-400 mt-1" id="act-total-minutes">0 mins</div>
+                        <span class="text-[11px] text-slate-500">Deliberate workouts</span>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Step & Calorie Burn Bar Graph</h3>
+                    <div class="h-72">
+                        <canvas id="activityTimelineChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. RECOVERY ANALYSIS TAB -->
+            <section id="tab-recovery" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-1">Resting Heart Rate (RHR)</h3>
+                        <p class="text-xs text-slate-400 mb-4">Lower usually indicates higher fitness</p>
+                        <div class="text-3xl font-bold text-emerald-500 dark:text-emerald-400" id="rec-avg-rhr">-- bpm</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-1">Heart Rate Variability (HRV)</h3>
+                        <p class="text-xs text-slate-400 mb-4">Higher HRV signals better recovery</p>
+                        <div class="text-3xl font-bold text-cyan-500 dark:text-cyan-400" id="rec-avg-hrv">-- ms</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="font-bold text-slate-900 dark:text-slate-100 mb-1">Recovery Readiness Index</h3>
+                        <p class="text-xs text-slate-400 mb-4">Sleep + HRV + Resting HR score</p>
+                        <div class="text-3xl font-bold text-purple-500 dark:text-purple-400" id="rec-readiness-score">-- / 100</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Resting Heart Rate Distribution (Bar Graph)</h3>
+                        <div class="h-72">
+                            <canvas id="recoveryBarChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Heart Rate vs HRV Trend</h3>
+                        <div class="h-72">
+                            <canvas id="recoveryTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. STRESS & MOOD TAB -->
+            <section id="tab-stress" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="glass-panel p-5 rounded-2xl lg:col-span-2">
+                        <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Daily Stress (1-10) vs Mood (1-5) Trend Graph</h3>
+                        <div class="h-72">
+                            <canvas id="stressMoodChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold mb-2 text-slate-900 dark:text-slate-100">Mood Breakdown (Pie Chart)</h3>
+                            <p class="text-xs text-slate-400 mb-4">Distribution of reported daily mood</p>
+                            <div class="h-56 relative flex items-center justify-center">
+                                <canvas id="moodPieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 flex justify-between">
+                            <span>Dominant Mood: <strong id="dominant-mood" class="text-teal-500 dark:text-teal-400">4 / 5 (Good)</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. HYDRATION TAB -->
+            <section id="tab-hydration" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <span class="text-xs text-slate-400">Avg Daily Water Intake</span>
+                        <div class="text-3xl font-bold text-cyan-500 dark:text-cyan-400 mt-2" id="hyd-avg-liters">0 L</div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl">
+                        <span class="text-xs text-slate-400">Hydration Goal Achievement</span>
+                        <div class="text-3xl font-bold text-teal-500 dark:text-teal-400 mt-2" id="hyd-goal-pct">0%</div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Daily Water Consumption Bar Graph (Liters)</h3>
+                    <div class="h-72">
+                        <canvas id="hydrationChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. WEIGHT TAB -->
+            <section id="tab-weight" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl">
+                    <span class="text-xs text-slate-400">Current Morning Weight</span>
+                    <div class="text-3xl font-bold text-blue-500 dark:text-blue-400 mt-2" id="weight-latest">0 kg</div>
+                </div>
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold mb-4 text-slate-900 dark:text-slate-100">Body Weight Trend (kg)</h3>
+                    <div class="h-72">
+                        <canvas id="weightTrendChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. GOALS TAB -->
+            <section id="tab-goals" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl space-y-5">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100">Configured Goals & Current Achievements</h3>
+                    <div class="space-y-3 text-xs font-semibold">
+                        <div class="flex justify-between"><span>Daily Step Count Goal</span><span id="goal-steps-pct" class="font-bold text-indigo-500">0%</span></div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden"><div id="goal-steps-bar" class="bg-indigo-600 h-full w-0 transition-all duration-500"></div></div>
+                        <div class="flex justify-between"><span>Sleep Goal (Hours)</span><span id="goal-sleep-pct" class="font-bold text-teal-500">0%</span></div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden"><div id="goal-sleep-bar" class="bg-teal-600 h-full w-0 transition-all duration-500"></div></div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 10. AI COACH TAB -->
+            <section id="tab-coach" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl flex flex-col h-[75vh]">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-fuchsia-600 to-indigo-600 flex items-center justify-center text-white text-lg font-bold">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-slate-100" data-i18n="coachTitle">Google Gemini Wellness Coach</h3>
+                                <p class="text-xs text-slate-400" data-i18n="coachSub">Contextual wellness analysis powered by Gemini 3 Flash</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"></div>
+                    <form id="ai-chat-form" class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex gap-2">
+                        <input type="text" id="ai-user-input" placeholder="Ask any health, fitness, sleep or dataset question..." class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs rounded-xl px-4 py-3 focus:outline-none border border-slate-200 dark:border-slate-700">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3 rounded-xl text-xs" data-i18n="sendBtn">Send</button>
+                    </form>
+                </div>
+            </section>
+            <section id="tab-alerts" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold text-lg mb-4 text-slate-900 dark:text-slate-100">Automated Data Insights & Smart Alerts</h3>
+                    <div id="smart-alerts-list" class="space-y-3"></div>
+                </div>
+            </section>
+            <section id="tab-reports" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100">Export Wellness Data</h3>
+                    <div class="flex gap-3">
+                        <button id="btn-export-csv" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl">Export CSV</button>
+                    </div>
+                </div>
+            </section>
+            <section id="tab-settings" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl space-y-4 max-w-xl">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100">Dashboard Settings</h3>
+                    <div class="space-y-2 text-xs">
+                        <label class="block text-slate-500 dark:text-slate-400">Target Steps / Day</label>
+                        <input type="number" id="setting-goal-steps" value="10000" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2 rounded-xl text-slate-900 dark:text-slate-100">
+                        <button id="save-goals-btn" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl">Save Settings</button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- LIVE WORKOUT TIMER MODAL -->
+    <div id="workout-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-5">
+            <button id="close-workout-modal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-stopwatch animate-pulse"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-lg" id="modal-workout-name">Upper Body Strength</h3>
+                    <p class="text-xs text-slate-400">Live Workout Stopwatch & Active Metrics</p>
+                </div>
+            </div>
+
+            <div class="py-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <span class="text-5xl font-black font-mono text-indigo-600 dark:text-indigo-400 tracking-wider" id="workout-timer-display">00:00</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">Active Session Time</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-center">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <span class="text-[11px] font-bold text-slate-400">Active Calories</span>
+                    <div class="text-xl font-black text-rose-500 mt-0.5" id="workout-cals-counter">0 kcal</div>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <span class="text-[11px] font-bold text-slate-400">Heart Rate</span>
+                    <div class="text-xl font-black text-emerald-500 mt-0.5" id="workout-hr-counter">118 bpm</div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button id="toggle-workout-timer" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl text-xs transition shadow-md shadow-indigo-200 dark:shadow-none flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-pause text-xs" id="timer-btn-icon"></i>
+                    <span id="timer-btn-text">Pause Workout</span>
+                </button>
+                <button id="finish-workout-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-5 py-3 rounded-xl text-xs transition flex items-center space-x-2">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Complete & Log</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKOUT LIBRARY MODAL -->
+    <div id="workout-library-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative text-slate-900 dark:text-white space-y-5">
+            <button id="close-library-modal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-lg">Workout Routine Library</h3>
+                    <p class="text-xs text-slate-400">Select a pre-configured training routine for today</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-1 scrollbar-thin" id="workout-routines-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const i18n = {
+            en: {
+                headerTitle: "Emily's Wellness",
+                headerSub: "Wellness Dashboard AI",
+                navOverview: "Dashboard",
+                navAnalytics: "Analytics",
+                navSleep: "Sleep",
+                navActivity: "Activity",
+                navRecovery: "Recovery",
+                navStress: "Stress & Mood",
+                navHydration: "Hydration",
+                navWeight: "Weight",
+                navGoals: "Challenges",
+                navCoach: "AI Coach",
+                navAlerts: "Alerts",
+                navReports: "Reports",
+                navSettings: "Settings",
+                proAnalytics: "Pro Analytics",
+                proSub: "Unlock Gemini 3 AI insights & automated reports.",
+                readSummary: "Read Briefing",
+                levelActive: "Level 12 Active",
+                welcomeSub: "Keep pushing your limits and stay consistent!",
+                apply: "Apply",
+                btn7d: "7D",
+                btn30d: "30D",
+                btnFullYear: "2025",
+                todaysWorkout: "Today's Workout",
+                viewAll: "View All",
+                startWorkoutBtn: "Start Workout",
+                weeklyGoalProgress: "Weekly Goal Progress",
+                weeklyGoalSub: "Target metrics achieved across active days",
+                optSteps: "Steps Goal",
+                optSleep: "Sleep Goal",
+                optStress: "Stress Balance",
+                goalProgress: "Goal Progress",
+                targetMetric: "Target Goal Metric",
+                currentAverage: "Current Filter Average",
+                activeDaysAchieved: "Active Days Achieved",
+                coachBadge1: "Rest Insight",
+                coachTitle1: "\"A Little More Sleep Could Go a Long Way\"",
+                coachDesc1: "You're sleeping 6.5 hrs on average (vs 7.5 national). Why don't you go to bed 20-30 minutes earlier?",
+                coachBadge2: "Activity Badge",
+                coachTitle2: "\"Your Body Has Earned a Lighter Day\"",
+                coachDesc2: "You've been walking 8.4k steps and your daily steps have stayed consistently high. A gentle stretch day is well deserved!",
+                coachBadge3: "Cardio Notice",
+                coachTitle3: "\"Your Heart Finds Your Sleep Tess\"",
+                coachDesc3: "On days with shorter sleep, your resting heart rate tends to climb. 08-39 minutes earlier tonight?",
+                coachBadge4: "Consistency",
+                coachTitle4: "\"Your Consistency Is Your Superpower\"",
+                coachDesc4: "Your workout totals have stayed impressively stable. Nothing is crucial like this index — +0.4 difference over time.",
+                timelineTitle: "Activity & Recovery Daily Timeline",
+                timelineSub: "High-definition daily steps, sleep score, and physical performance correlation",
+                legendSteps: "Steps Count",
+                legendSleep: "Sleep Score",
+                coachTitle: "Google Gemini Wellness Coach",
+                coachSub: "Contextual wellness analysis powered by Gemini 3 Flash",
+                sendBtn: "Send"
+            },
+            hi: {
+                headerTitle: "एमिली की वेलनेस",
+                headerSub: "वेलनेस डैशबोर्ड एआई",
+                navOverview: "डैशबोर्ड",
+                navAnalytics: "विश्लेषिकी",
+                navSleep: "नींद",
+                navActivity: "गतिविधि",
+                navRecovery: "रिकवरी",
+                navStress: "तनाव और मूड",
+                navHydration: "जल सेवन",
+                navWeight: "वजन",
+                navGoals: "चुनौतियां",
+                navCoach: "एआई कोच",
+                navAlerts: "अलर्ट",
+                navReports: "रिपोर्ट",
+                navSettings: "सेटिंग्स",
+                proAnalytics: "प्रो एनालिटिक्स",
+                proSub: "जेमिनी 3 एआई और स्वचालित रिपोर्ट अनलॉक करें।",
+                readSummary: "विवरण सुनें",
+                levelActive: "लेवल 12 एक्टिव",
+                welcomeSub: "अपनी सीमाएं पार करते रहें और लगातार बने रहें!",
+                apply: "लागू करें",
+                btn7d: "7 दिन",
+                btn30d: "30 दिन",
+                btnFullYear: "2025",
+                todaysWorkout: "आज का वर्कआउट",
+                viewAll: "सभी देखें",
+                startWorkoutBtn: "वर्कआउट शुरू करें",
+                weeklyGoalProgress: "साप्ताहिक लक्ष्य प्रगति",
+                weeklyGoalSub: "सक्रिय दिनों में प्राप्त लक्ष्य मेट्रिक्स",
+                optSteps: "स्टेप्स लक्ष्य",
+                optSleep: "नींद का लक्ष्य",
+                optStress: "तनाव संतुलन",
+                goalProgress: "लक्ष्य प्रगति",
+                targetMetric: "लक्ष्य मीट्रिक",
+                currentAverage: "वर्तमान औसत",
+                activeDaysAchieved: "सक्रिय दिन प्राप्त",
+                coachBadge1: "आराम अंतर्दृष्टि",
+                coachTitle1: "\"थोड़ी और नींद बहुत मदद कर सकती है\"",
+                coachDesc1: "आप औसतन 6.5 घंटे सो रही हैं। क्या आप 20-30 मिनट पहले सोने जा सकती हैं?",
+                coachBadge2: "गतिविधि बैज",
+                coachTitle2: "\"आपके शरीर ने हल्के दिन का हकदार पाया है\"",
+                coachDesc2: "आप लगातार 8.4k कदम चल रही हैं। स्ट्रेचिंग का एक दिन बहुत अच्छा रहेगा!",
+                coachBadge3: "कार्डियो सूचना",
+                coachTitle3: "\"आपका हृदय आपकी नींद को पहचानता है\"",
+                coachDesc3: "कम नींद वाले दिनों में हृदय गति बढ़ती है। आज रात थोड़ी जल्दी सोएं?",
+                coachBadge4: "निरंतरता",
+                coachTitle4: "\"आपकी निरंतरता ही आपकी ताकत है\"",
+                coachDesc4: "आपके वर्कआउट आँकड़े बेहद स्थिर रहे हैं। समय के साथ यह बहुत अच्छा बदलाव है।",
+                timelineTitle: "गतिविधि और रिकवरी दैनिक समयरेखा",
+                timelineSub: "दैनिक कदम, नींद स्कोर और शारीरिक प्रदर्शन सहसंबंध",
+                legendSteps: "कदम संख्या",
+                legendSleep: "नींद स्कोर",
+                coachTitle: "गूगल जेमिनी वेलनेस कोच",
+                coachSub: "जेमिनी 3 फ्लैश द्वारा संचालित संदर्भ आधारित वेलनेस विश्लेषण",
+                sendBtn: "भेजें"
+            },
+            es: {
+                headerTitle: "Bienestar de Emily",
+                headerSub: "Panel de Bienestar AI",
+                navOverview: "Tablero",
+                navAnalytics: "Analítica",
+                navSleep: "Sueño",
+                navActivity: "Actividad",
+                navRecovery: "Recuperación",
+                navStress: "Estrés y Ánimo",
+                navHydration: "Hidratación",
+                navWeight: "Peso",
+                navGoals: "Desafíos",
+                navCoach: "Coach IA",
+                navAlerts: "Alertas",
+                navReports: "Informes",
+                navSettings: "Ajustes",
+                proAnalytics: "Analítica Pro",
+                proSub: "Desbloquea información de Gemini 3 AI.",
+                readSummary: "Leer Resumen",
+                levelActive: "Nivel 12 Activo",
+                welcomeSub: "¡Sigue superando tus límites y mantén la constancia!",
+                apply: "Aplicar",
+                btn7d: "7D",
+                btn30d: "30D",
+                btnFullYear: "2025",
+                todaysWorkout: "Entrenamiento de Hoy",
+                viewAll: "Ver Todos",
+                startWorkoutBtn: "Iniciar Entrenamiento",
+                weeklyGoalProgress: "Progreso de Metas Semanales",
+                weeklyGoalSub: "Métricas objetivo logradas en días activos",
+                optSteps: "Meta de Pasos",
+                optSleep: "Meta de Sueño",
+                optStress: "Balance de Estrés",
+                goalProgress: "Progreso",
+                targetMetric: "Métrica Objetivo",
+                currentAverage: "Promedio Actual",
+                activeDaysAchieved: "Días Activos Logrados",
+                coachBadge1: "Perspectiva de Descanso",
+                coachTitle1: "\"Un poco más de sueño podría ser de gran ayuda\"",
+                coachDesc1: "Duermes 6.5 horas en promedio. ¿Por qué no te acuestas 20-30 minutos antes?",
+                coachBadge2: "Insignia de Actividad",
+                coachTitle2: "\"Tu cuerpo se ha ganado un día más ligero\"",
+                coachDesc2: "Has caminado 8.4k pasos constantemente. ¡Un día de estiramiento es bien merecido!",
+                coachBadge3: "Aviso Cardio",
+                coachTitle3: "\"Tu corazón encuentra tu descanso\"",
+                coachDesc3: "En días con menor sueño, tu frecuencia cardíaca tiende a subir.",
+                coachBadge4: "Consistencia",
+                coachTitle4: "\"Tu consistencia es tu superpoder\"",
+                coachDesc4: "Tus totales de entrenamiento se han mantenido notablemente estables.",
+                timelineTitle: "Línea de Tiempo de Actividad y Recuperación",
+                timelineSub: "Correlación diaria de pasos, puntuación de sueño y rendimiento",
+                legendSteps: "Conteo de Pasos",
+                legendSleep: "Puntuación de Sueño",
+                coachTitle: "Coach de Bienestar Google Gemini",
+                coachSub: "Análisis de bienestar con Gemini 3 Flash",
+                sendBtn: "Enviar"
+            },
+            fr: {
+                headerTitle: "Bien-être d'Emily",
+                headerSub: "Tableau de Bord IA",
+                navOverview: "Tableau de bord",
+                navAnalytics: "Analytique",
+                navSleep: "Sommeil",
+                navActivity: "Activité",
+                navRecovery: "Récupération",
+                navStress: "Stress & Humeur",
+                navHydration: "Hydratation",
+                navWeight: "Poids",
+                navGoals: "Défis",
+                navCoach: "Coach IA",
+                navAlerts: "Alertes",
+                navReports: "Rapports",
+                navSettings: "Paramètres",
+                proAnalytics: "Analytique Pro",
+                proSub: "Débloquez les insights Gemini 3 AI.",
+                readSummary: "Lire le Résumé",
+                levelActive: "Niveau 12 Actif",
+                welcomeSub: "Continuez à repousser vos limits et restez constant !",
+                apply: "Appliquer",
+                btn7d: "7J",
+                btn30d: "30J",
+                btnFullYear: "2025",
+                todaysWorkout: "Entraînement du Jour",
+                viewAll: "Voir Tout",
+                startWorkoutBtn: "Commencer l'Entraînement",
+                weeklyGoalProgress: "Progrès des Objectifs Hebdomadaires",
+                weeklyGoalSub: "Métriques cibles atteintes sur les jours actifs",
+                optSteps: "Objectif Pas",
+                optSleep: "Objectif Sommeil",
+                optStress: "Équilibre du Stress",
+                goalProgress: "Progrès",
+                targetMetric: "Métrique Cible",
+                currentAverage: "Moyenne Actuelle",
+                activeDaysAchieved: "Jours Actifs Atteints",
+                coachBadge1: "Aperçu Repos",
+                coachTitle1: "\"Un peu plus de sommeil ferait du bien\"",
+                coachDesc1: "Vous dormez 6.5 heures en moyenne. Pourquoi ne pas vous coucher 20-30 minutes plus tôt ?",
+                coachBadge2: "Badge Activité",
+                coachTitle2: "\"Votre corps a mérité une journée plus légère\"",
+                coachDesc2: "Vous avez marché 8.4k pas de manière constante.",
+                coachBadge3: "Avis Cardio",
+                coachTitle3: "\"Votre cœur trouve son repos\"",
+                coachDesc3: "Les jours de sommeil court, votre fréquence cardiaque augmente.",
+                coachBadge4: "Constance",
+                coachTitle4: "\"Votre constance est votre super-pouvoir\"",
+                coachDesc4: "Vos totaux d'entraînement sont restés remarquablement stables.",
+                timelineTitle: "Chronologie de l'Activité et de la Récupération",
+                timelineSub: "Corrélation quotidienne des pas, du score de sommeil et de la performance",
+                legendSteps: "Nombre de Pas",
+                legendSleep: "Score de Sommeil",
+                coachTitle: "Coach Bien-être Google Gemini",
+                coachSub: "Analyse du bien-être alimentée par Gemini 3 Flash",
+                sendBtn: "Envoyer"
+            }
+        };
+
+        const generateEmilyDataset = () => {
+            const data = [];
+            const startDate = new Date('2025-01-01');
+            const exerciseTypes = ['Weight Training', 'Dancing', 'Walking', 'Running', 'Yoga', 'None'];
+            for (let i = 0; i < 365; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const steps = Math.floor(4000 + Math.random() * 8000);
+                const distance_km = parseFloat((steps * 0.00075).toFixed(2));
+                const calories_burned = Math.floor(1800 + steps * 0.05 + Math.random() * 300);
+                const exercise_minutes = Math.floor(20 + Math.random() * 60);
+                const sleep_hours = parseFloat((5.5 + Math.random() * 3.5).toFixed(1));
+                const sleep_score = Math.min(100, Math.floor((sleep_hours / 8) * 70 + 25));
+                data.push({
+                    date: dateStr,
+                    steps,
+                    distance_km,
+                    calories_burned,
+                    exercise_minutes,
+                    exercise_type: exerciseTypes[Math.floor(Math.random() * exerciseTypes.length)],
+                    avg_heart_rate_bpm: Math.floor(70 + Math.random() * 15),
+                    resting_heart_rate_bpm: Math.floor(58 + Math.random() * 8),
+                    hrv_ms: Math.floor(45 + Math.random() * 40),
+                    sleep_hours,
+                    deep_sleep_pct: parseFloat((14 + Math.random() * 14).toFixed(1)),
+                    sleep_score,
+                    stress_score: Math.floor(2 + Math.random() * 7),
+                    water_liters: parseFloat((1.5 + Math.random() * 1.8).toFixed(1)),
+                    weight_kg: parseFloat((61.5 + Math.sin(i / 30) * 1.2).toFixed(1)),
+                    mood_1to5: Math.floor(2 + Math.random() * 3)
+                });
+            }
+            return data;
+        };
+
+        const state = {
+            rawDataset: generateEmilyDataset(),
+            filteredDataset: [],
+            activeTab: 'overview',
+            currentLang: 'en',
+            currentTheme: 'light',
+            goals: { steps: 10000, sleep: 7.5, water: 2.5, exercise: 45 },
+            charts: {},
+            geminiApiKey: localStorage.getItem('pj2_gemini_key') || ''
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            state.filteredDataset = [...state.rawDataset];
+            initNavigation();
+            initThemeSelector();
+            initLanguageSelector();
+            initAudioFeatures();
+            initDateFilters();
+            initWorkoutTracker();
+            initReportsAndExports();
+            initOverviewMetricSelector();
+            initAiCoach();
+            renderDashboard();
+        });
+
+        function initNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetTab = item.getAttribute('data-tab');
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    item.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+                    const activeTab = document.getElementById(`tab-${targetTab}`);
+                    if (activeTab) activeTab.classList.remove('hidden');
+                    state.activeTab = targetTab;
+                    renderDashboard();
+                });
+            });
+            document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+                document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
+            });
+        }
+
+        function initThemeSelector() {
+            document.getElementById('theme-selector')?.addEventListener('change', (e) => {
+                state.currentTheme = e.target.value;
+                document.body.className = "bg-slate-50 text-slate-900 transition-colors duration-200 min-h-screen flex flex-col md:flex-row";
+                document.documentElement.classList.remove('dark');
+                if (state.currentTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.body.classList.add('theme-dark');
+                } else if (state.currentTheme === 'emerald') {
+                    document.body.classList.add('theme-emerald');
+                } else if (state.currentTheme === 'cyberpunk') {
+                    document.body.classList.add('theme-cyberpunk');
+                }
+                renderDashboard();
+            });
+        }
+
+        function initLanguageSelector() {
+            document.getElementById('lang-select')?.addEventListener('change', (e) => {
+                state.currentLang = e.target.value;
+                const dict = i18n[state.currentLang] || i18n['en'];
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) el.innerText = dict[key];
+                });
+            });
+        }
+
+        function initAudioFeatures() {
+            document.getElementById('global-read-aloud-btn')?.addEventListener('click', () => {
+                const summary = computeSummaryMetrics(state.filteredDataset);
+                if ('speechSynthesis' in window) {
+                    const utter = new SpeechSynthesisUtterance(`Good morning Emily! Average steps: ${summary.avgSteps}. Average sleep: ${summary.avgSleepHours} hours.`);
+                    window.speechSynthesis.speak(utter);
+                }
+            });
+        }
+
+        function initDateFilters() {
+            const startInput = document.getElementById('date-start');
+            const endInput = document.getElementById('date-end');
+            const applyBtn = document.getElementById('apply-custom-date');
+
+            if (applyBtn && startInput && endInput) {
+                applyBtn.addEventListener('click', () => {
+                    filterDataset(startInput.value, endInput.value);
+                });
+            }
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active', 'bg-white', 'text-indigo-600', 'shadow-sm'));
+                    btn.classList.add('active', 'bg-white', 'text-indigo-600', 'shadow-sm');
+                    const days = parseInt(btn.getAttribute('data-filter'));
+                    const end = new Date('2025-12-31');
+                    const start = new Date('2025-12-31');
+                    start.setDate(end.getDate() - days + 1);
+
+                    const startStr = start.toISOString().split('T')[0];
+                    const endStr = end.toISOString().split('T')[0];
+
+                    if (startInput) startInput.value = startStr;
+                    if (endInput) endInput.value = endStr;
+
+                    filterDataset(startStr, endStr);
+                });
+            });
+        }
+
+        function filterDataset(startDateStr, endDateStr) {
+            state.filteredDataset = state.rawDataset.filter(d => d.date >= startDateStr && d.date <= endDateStr);
+            if (state.filteredDataset.length === 0) {
+                state.filteredDataset = state.rawDataset.slice(-7);
+            }
+            renderDashboard();
+        }
+
+        function initWorkoutTracker() {
+            const modal = document.getElementById('workout-modal');
+            const libraryModal = document.getElementById('workout-library-modal');
+
+            document.getElementById('start-workout-trigger')?.addEventListener('click', () => modal?.classList.remove('hidden'));
+            document.getElementById('close-workout-modal')?.addEventListener('click', () => modal?.classList.add('hidden'));
+            document.getElementById('view-all-workouts-btn')?.addEventListener('click', () => {
+                renderWorkoutLibrary();
+                libraryModal?.classList.remove('hidden');
+            });
+            document.getElementById('close-library-modal')?.addEventListener('click', () => libraryModal?.classList.add('hidden'));
+            document.getElementById('finish-workout-btn')?.addEventListener('click', () => {
+                modal?.classList.add('hidden');
+                alert('Workout completed successfully and logged!');
+            });
+        }
+
+        const workoutsList = [
+            { id: 1, title: 'Upper Body Strength', type: 'Strength', duration: '45 min', cals: 320, level: 'Medium' },
+            { id: 2, title: 'HIIT Fat Burner', type: 'Cardio', duration: '30 min', cals: 380, level: 'High' },
+            { id: 3, title: 'Vinyasa Flow Yoga', type: 'Yoga', duration: '50 min', cals: 210, level: 'Low' },
+            { id: 4, title: 'Dance Cardio Party', type: 'Dancing', duration: '40 min', cals: 310, level: 'Medium' }
+        ];
+
+        function renderWorkoutLibrary() {
+            const container = document.getElementById('workout-routines-container');
+            if (!container) return;
+            container.innerHTML = workoutsList.map(w => `
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="px-2.5 py-0.5 rounded-lg bg-indigo-100 text-indigo-700 font-extrabold text-[10px] uppercase">${w.type}</span>
+                        <span class="text-xs text-slate-400 font-semibold">${w.duration}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">${w.title}</h4>
+                        <div class="text-xs text-slate-400 mt-1">Burn: <strong class="text-rose-500">${w.cals} kcal</strong></div>
+                    </div>
+                    <button onclick="selectRoutine(${w.id})" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 rounded-xl transition">Select Routine</button>
+                </div>
+            `).join('');
+        }
+
+        window.selectRoutine = (id) => {
+            const w = workoutsList.find(item => item.id === id);
+            if (w) {
+                const title = document.getElementById('active-workout-title');
+                const badge = document.getElementById('active-workout-badge');
+                const duration = document.getElementById('active-workout-duration');
+                const cals = document.getElementById('active-workout-cals');
+                const level = document.getElementById('active-workout-level');
+                if (title) title.innerText = w.title;
+                if (badge) badge.innerText = w.type;
+                if (duration) duration.innerText = w.duration;
+                if (cals) cals.innerText = `${w.cals} kcal`;
+                if (level) level.innerText = w.level;
+                document.getElementById('workout-library-modal')?.classList.add('hidden');
+            }
+        };
+
+        function initReportsAndExports() {
+            document.getElementById('btn-export-csv')?.addEventListener('click', () => {
+                let csv = "date,steps,calories_burned,sleep_hours\n" + state.filteredDataset.map(d => `${d.date},${d.steps},${d.calories_burned},${d.sleep_hours}`).join("\n");
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'Emily_Wellness_Report.csv';
+                link.click();
+            });
+        }
+
+        function initOverviewMetricSelector() {
+            document.getElementById('overview-chart-metric')?.addEventListener('change', () => {
+                const summary = computeSummaryMetrics(state.filteredDataset);
+                renderOverviewCharts(summary);
+            });
+        }
+
+        function computeSummaryMetrics(dataset) {
+            const count = dataset.length || 1;
+            return {
+                avgSteps: Math.round(dataset.reduce((a, b) => a + b.steps, 0) / count),
+                totalDistance: dataset.reduce((a, b) => a + b.distance_km, 0).toFixed(1),
+                avgCalories: Math.round(dataset.reduce((a, b) => a + b.calories_burned, 0) / count),
+                totalCalories: dataset.reduce((a, b) => a + b.calories_burned, 0),
+                avgExerciseMins: Math.round(dataset.reduce((a, b) => a + b.exercise_minutes, 0) / count),
+                totalExerciseMins: dataset.reduce((a, b) => a + b.exercise_minutes, 0),
+                avgSleepHours: (dataset.reduce((a, b) => a + b.sleep_hours, 0) / count).toFixed(1),
+                avgSleepScore: Math.round(dataset.reduce((a, b) => a + b.sleep_score, 0) / count),
+                avgDeepSleepPct: (dataset.reduce((a, b) => a + b.deep_sleep_pct, 0) / count).toFixed(1),
+                avgStress: (dataset.reduce((a, b) => a + b.stress_score, 0) / count).toFixed(1),
+                avgHRV: Math.round(dataset.reduce((a, b) => a + b.hrv_ms, 0) / count),
+                avgRestingHR: Math.round(dataset.reduce((a, b) => a + b.resting_heart_rate_bpm, 0) / count),
+                avgWater: (dataset.reduce((a, b) => a + b.water_liters, 0) / count).toFixed(1),
+                latestWeight: dataset[dataset.length - 1]?.weight_kg || 62.0
+            };
+        }
+
+        function renderDashboard() {
+            const summary = computeSummaryMetrics(state.filteredDataset);
+            if (state.activeTab === 'overview') {
+                renderOverviewKPIs(summary);
+                renderOverviewCharts(summary);
+            } else if (state.activeTab === 'analytics') {
+                renderAnalyticsView(summary);
+            } else if (state.activeTab === 'sleep') {
+                renderSleepView(summary);
+            } else if (state.activeTab === 'activity') {
+                renderActivityView(summary);
+            } else if (state.activeTab === 'recovery') {
+                renderRecoveryView(summary);
+            } else if (state.activeTab === 'stress') {
+                renderStressView(summary);
+            } else if (state.activeTab === 'hydration') {
+                renderHydrationView(summary);
+            } else if (state.activeTab === 'weight') {
+                renderWeightView(summary);
+            } else if (state.activeTab === 'goals') {
+                renderGoalsView(summary);
+            } else if (state.activeTab === 'alerts') {
+                renderSmartAlerts();
+            }
+        }
+
+        function renderOverviewKPIs(summary) {
+            const container = document.getElementById('kpi-cards-container');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="glass-panel p-5 flex flex-col justify-between space-y-3">
+                    <div class="w-10 h-10 rounded-2xl text-purple-600 bg-purple-50 flex items-center justify-center"><i class="fa-solid fa-fire text-base"></i></div>
+                    <div><span class="text-xs font-semibold text-slate-400">Calories Burned</span><div class="text-2xl font-black text-slate-900 dark:text-slate-100">${summary.avgCalories} kcal</div></div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-between space-y-3">
+                    <div class="w-10 h-10 rounded-2xl text-emerald-600 bg-emerald-50 flex items-center justify-center"><i class="fa-solid fa-shoe-prints text-base"></i></div>
+                    <div><span class="text-xs font-semibold text-slate-400">Steps</span><div class="text-2xl font-black text-slate-900 dark:text-slate-100">${summary.avgSteps.toLocaleString()}</div></div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-between space-y-3">
+                    <div class="w-10 h-10 rounded-2xl text-amber-600 bg-amber-50 flex items-center justify-center"><i class="fa-solid fa-stopwatch text-base"></i></div>
+                    <div><span class="text-xs font-semibold text-slate-400">Workout Time</span><div class="text-2xl font-black text-slate-900 dark:text-slate-100">${summary.avgExerciseMins} min</div></div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-between space-y-3">
+                    <div class="w-10 h-10 rounded-2xl text-blue-600 bg-blue-50 flex items-center justify-center"><i class="fa-solid fa-weight-scale text-base"></i></div>
+                    <div><span class="text-xs font-semibold text-slate-400">Weight</span><div class="text-2xl font-black text-slate-900 dark:text-slate-100">${summary.latestWeight} kg</div></div>
+                </div>
+            `;
+        }
+
+        function renderOverviewCharts(summary) {
+            const labels = state.filteredDataset.map(d => d.date.slice(5));
+            const selectedMetric = document.getElementById('overview-chart-metric')?.value || 'steps';
+            const totalDays = state.filteredDataset.length || 1;
+
+            let percentage = 0;
+            let targetText = "";
+            let avgText = "";
+            let activeDaysText = "";
+            let chartData = [];
+            let chartColors = [];
+
+            if (selectedMetric === 'steps') {
+                const target = state.goals.steps;
+                const achievedDays = state.filteredDataset.filter(d => d.steps >= target).length;
+                percentage = Math.min(100, Math.round((summary.avgSteps / target) * 100));
+                targetText = `${target.toLocaleString()} steps / day`;
+                avgText = `${summary.avgSteps.toLocaleString()} steps / day`;
+                activeDaysText = `${achievedDays} / ${totalDays} active days`;
+                chartData = [summary.avgSteps, Math.max(0, target - summary.avgSteps)];
+                chartColors = ['#6366f1', '#e2e8f0'];
+            } else if (selectedMetric === 'sleep') {
+                const target = state.goals.sleep;
+                const achievedDays = state.filteredDataset.filter(d => d.sleep_hours && d.sleep_hours >= target).length;
+                percentage = Math.min(100, Math.round((summary.avgSleepHours / target) * 100));
+                targetText = `${target} hrs / night`;
+                avgText = `${summary.avgSleepHours} hrs / night`;
+                activeDaysText = `${achievedDays} / ${totalDays} nights achieved`;
+                chartData = [parseFloat(summary.avgSleepHours), Math.max(0, target - parseFloat(summary.avgSleepHours))];
+                chartColors = ['#0d9488', '#cbd5e1'];
+            } else if (selectedMetric === 'stress') {
+                const lowStressDays = state.filteredDataset.filter(d => d.stress_score <= 5).length;
+                percentage = Math.round((lowStressDays / totalDays) * 100);
+                targetText = "Low Stress (<= 5)";
+                avgText = `${summary.avgStress} / 10 Avg Stress`;
+                activeDaysText = `${lowStressDays} / ${totalDays} balanced days`;
+                chartData = [lowStressDays, totalDays - lowStressDays];
+                chartColors = ['#10b981', '#f43f5e'];
+            }
+
+            const goalOverallPct = document.getElementById('goal-overall-pct');
+            if (goalOverallPct) goalOverallPct.innerText = `${percentage}%`;
+            
+            const goalTarget = document.getElementById('goal-metric-target');
+            if (goalTarget) goalTarget.innerText = targetText;
+
+            const goalStepsText = document.getElementById('goal-steps-text');
+            if (goalStepsText) goalStepsText.innerText = avgText;
+
+            const goalCalsText = document.getElementById('goal-cals-text');
+            if (goalCalsText) goalCalsText.innerText = activeDaysText;
+
+            createChart('exerciseTypeChart', 'doughnut', {
+                labels: ['Achieved', 'Remaining'],
+                datasets: [{ data: chartData, backgroundColor: chartColors, borderWidth: 4, borderColor: state.currentTheme !== 'light' ? '#111827' : '#ffffff' }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '76%',
+                plugins: { legend: { display: false } }
+            });
+
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('overviewTrendChart', 'line', {
+                labels,
+                datasets: [
+                    { label: 'Daily Steps', data: state.filteredDataset.map(d => d.steps), borderColor: '#d97706', backgroundColor: 'rgba(217, 119, 6, 0.15)', borderWidth: 3, fill: true, tension: 0.3 },
+                    { label: 'Sleep Score', data: state.filteredDataset.map(d => d.sleep_score), borderColor: '#4f46e5', borderWidth: 3, yAxisID: 'y1', tension: 0.3 }
+                ]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: textColor, font: { weight: 'bold' } } }
+                },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { position: 'left', ticks: { color: textColor, font: { weight: 'bold' } }, title: { display: true, text: 'Steps', color: '#d97706' } },
+                    y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor, font: { weight: 'bold' } }, title: { display: true, text: 'Sleep Score', color: '#4f46e5' } }
+                }
+            });
+        }
+
+        function renderAnalyticsView(summary) {
+            const tableBody = document.getElementById('aggregation-table-body');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr class="font-semibold text-slate-900 dark:text-slate-100">
+                        <td class="p-3 text-indigo-500 font-bold">Current Filter Period</td>
+                        <td class="p-3 font-mono text-amber-500 font-bold">${summary.avgSteps.toLocaleString()}</td>
+                        <td class="p-3 font-mono">${summary.avgSleepHours} hrs</td>
+                        <td class="p-3 font-mono text-indigo-500 font-bold">${summary.avgSleepScore} / 100</td>
+                        <td class="p-3 font-mono text-rose-500 font-bold">${summary.avgStress}</td>
+                        <td class="p-3 font-mono text-teal-500 font-bold">${summary.avgHRV} ms</td>
+                        <td class="p-3 font-mono">${summary.latestWeight} kg</td>
+                        <td class="p-3 font-mono text-emerald-500 font-bold">${summary.totalCalories.toLocaleString()} kcal</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderSleepView(summary) {
+            const elAvgHrs = document.getElementById('sleep-avg-hours');
+            if (elAvgHrs) elAvgHrs.innerText = `${summary.avgSleepHours} hrs`;
+            
+            const elAvgScore = document.getElementById('sleep-avg-score');
+            if (elAvgScore) elAvgScore.innerText = `${summary.avgSleepScore} / 100`;
+
+            const elAvgDeep = document.getElementById('sleep-avg-deep');
+            if (elAvgDeep) elAvgDeep.innerText = `${summary.avgDeepSleepPct}%`;
+
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('sleepTrendChart', 'line', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [
+                    { label: 'Sleep Hours', data: state.filteredDataset.map(d => d.sleep_hours), borderColor: '#4f46e5', borderWidth: 2.5, fill: false },
+                    { label: 'Sleep Quality Score', data: state.filteredDataset.map(d => d.sleep_score), borderColor: '#0d9488', borderWidth: 2.5, yAxisID: 'y1' }
+                ]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } },
+                    y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        function renderActivityView(summary) {
+            const elTotalSteps = document.getElementById('act-total-steps');
+            if (elTotalSteps) elTotalSteps.innerText = (summary.avgSteps * state.filteredDataset.length).toLocaleString();
+
+            const elAvgSteps = document.getElementById('act-avg-steps');
+            if (elAvgSteps) elAvgSteps.innerText = `Avg: ${summary.avgSteps.toLocaleString()} steps/day`;
+
+            const elDist = document.getElementById('act-total-distance');
+            if (elDist) elDist.innerText = `${summary.totalDistance} km`;
+
+            const elCals = document.getElementById('act-total-calories');
+            if (elCals) elCals.innerText = `${summary.totalCalories.toLocaleString()} kcal`;
+
+            const elMins = document.getElementById('act-total-minutes');
+            if (elMins) elMins.innerText = `${summary.totalExerciseMins} mins`;
+
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('activityTimelineChart', 'bar', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [{ label: 'Daily Steps', data: state.filteredDataset.map(d => d.steps), backgroundColor: '#d97706', borderRadius: 4 }]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        function renderRecoveryView(summary) {
+            const elRhr = document.getElementById('rec-avg-rhr');
+            if (elRhr) elRhr.innerText = `${summary.avgRestingHR} bpm`;
+
+            const elHrv = document.getElementById('rec-avg-hrv');
+            if (elHrv) elHrv.innerText = `${summary.avgHRV} ms`;
+
+            const elScore = document.getElementById('rec-readiness-score');
+            if (elScore) elScore.innerText = `${Math.min(100, Math.round((summary.avgHRV / 80) * 100))} / 100`;
+
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('recoveryBarChart', 'bar', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [{ 
+                    label: 'Resting Heart Rate (bpm)', 
+                    data: state.filteredDataset.map(d => d.resting_heart_rate_bpm), 
+                    backgroundColor: '#10b981', 
+                    borderRadius: 4 
+                }]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+
+            createChart('recoveryTrendChart', 'line', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [
+                    { label: 'HRV (ms)', data: state.filteredDataset.map(d => d.hrv_ms), borderColor: '#0891b2', borderWidth: 2.5 },
+                    { label: 'Resting HR (bpm)', data: state.filteredDataset.map(d => d.resting_heart_rate_bpm), borderColor: '#dc2626', borderWidth: 2.5 }
+                ]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        function renderStressView(summary) {
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('stressMoodChart', 'line', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [
+                    { label: 'Stress Score (1-10)', data: state.filteredDataset.map(d => d.stress_score), borderColor: '#e11d48', borderWidth: 2.5 },
+                    { label: 'Mood Score (1-5)', data: state.filteredDataset.map(d => d.mood_1to5), borderColor: '#0d9488', borderWidth: 2.5, yAxisID: 'y1' }
+                ]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } },
+                    y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+
+            const moodCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            state.filteredDataset.forEach(d => { if (d.mood_1to5) moodCounts[d.mood_1to5]++; });
+
+            let maxCount = -1;
+            let dominantMoodScore = 4;
+            Object.keys(moodCounts).forEach(m => {
+                if (moodCounts[m] > maxCount) {
+                    maxCount = moodCounts[m];
+                    dominantMoodScore = m;
+                }
+            });
+
+            const moodLabelsMap = { 1: '1 / 5 (Low)', 2: '2 / 5 (Fair)', 3: '3 / 5 (Good)', 4: '4 / 5 (Great)', 5: '5 / 5 (Excellent)' };
+            const domMoodElem = document.getElementById('dominant-mood');
+            if (domMoodElem) {
+                domMoodElem.innerText = moodLabelsMap[dominantMoodScore] || '4 / 5 (Good)';
+            }
+
+            createChart('moodPieChart', 'pie', {
+                labels: ['1 (Low)', '2 (Fair)', '3 (Good)', '4 (Great)', '5 (Excellent)'],
+                datasets: [{
+                    data: Object.values(moodCounts),
+                    backgroundColor: ['#ef4444', '#f97316', '#eab308', '#10b981', '#6366f1'],
+                    borderWidth: 2,
+                    borderColor: isDark ? '#111827' : '#ffffff'
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { weight: 'bold' } } } }
+            });
+        }
+
+        function renderHydrationView(summary) {
+            const elHyd = document.getElementById('hyd-avg-liters');
+            if (elHyd) elHyd.innerText = `${summary.avgWater} L`;
+
+            const goalPct = Math.min(100, Math.round((summary.avgWater / state.goals.water) * 100));
+            const elGoalPct = document.getElementById('hyd-goal-pct');
+            if (elGoalPct) elGoalPct.innerText = `${goalPct}%`;
+
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('hydrationChart', 'bar', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [{ label: 'Water Consumed (Liters)', data: state.filteredDataset.map(d => d.water_liters), backgroundColor: '#0284c7', borderRadius: 4 }]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        function renderWeightView(summary) {
+            const elWeight = document.getElementById('weight-latest');
+            if (elWeight) elWeight.innerText = `${summary.latestWeight} kg`;
+
+            const isDark = state.currentTheme !== 'light';
+            const textColor = isDark ? '#f8fafc' : '#0f172a';
+
+            createChart('weightTrendChart', 'line', {
+                labels: state.filteredDataset.map(d => d.date.slice(5)),
+                datasets: [{ label: 'Morning Weight (kg)', data: state.filteredDataset.map(d => d.weight_kg), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.12)', borderWidth: 3, fill: true }]
+            }, { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: textColor, font: { weight: 'bold' } } } },
+                scales: {
+                    x: { ticks: { color: textColor, font: { weight: 'bold' }, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { ticks: { color: textColor, font: { weight: 'bold' } } }
+                }
+            });
+        }
+
+        function renderGoalsView(summary) {
+            const stepsPct = Math.min(100, Math.round((summary.avgSteps / state.goals.steps) * 100));
+            const sleepPct = Math.min(100, Math.round((summary.avgSleepHours / state.goals.sleep) * 100));
+
+            const elStepsPct = document.getElementById('goal-steps-pct');
+            if (elStepsPct) elStepsPct.innerText = `${stepsPct}%`;
+            const elStepsBar = document.getElementById('goal-steps-bar');
+            if (elStepsBar) elStepsBar.style.width = `${stepsPct}%`;
+
+            const elSleepPct = document.getElementById('goal-sleep-pct');
+            if (elSleepPct) elSleepPct.innerText = `${sleepPct}%`;
+            const elSleepBar = document.getElementById('goal-sleep-bar');
+            if (elSleepBar) elSleepBar.style.width = `${sleepPct}%`;
+        }
+
+        function renderSmartAlerts() {
+            const list = document.getElementById('smart-alerts-list');
+            if (!list) return;
+
+            const summary = computeSummaryMetrics(state.filteredDataset);
+            const alerts = [];
+
+            if (parseFloat(summary.avgStress) > 5.5) {
+                alerts.push({ title: 'Elevated Stress Alert', msg: `Average stress level is currently ${summary.avgStress}/10 across the selected date range.` });
+            }
+            if (parseFloat(summary.avgSleepHours) < 7.0) {
+                alerts.push({ title: 'Sleep Deficit Notice', msg: `Average sleep duration (${summary.avgSleepHours} hrs) is below your target.` });
+            }
+            if (summary.avgSteps >= state.goals.steps) {
+                alerts.push({ title: 'Step Goal Achieved', msg: `Great job! Your average steps (${summary.avgSteps.toLocaleString()}) hit your daily target!` });
+            }
+
+            if (alerts.length === 0) {
+                list.innerHTML = `<div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold">All metrics are currently within healthy target ranges.</div>`;
+            } else {
+                list.innerHTML = alerts.map(a => `
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200">
+                        <h4 class="font-bold text-indigo-600 dark:text-indigo-400 mb-1">${a.title}</h4>
+                        <p>${a.msg}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function createChart(canvasId, type, data, options) {
+            const canvasElem = document.getElementById(canvasId);
+            if (!canvasElem) return;
+
+            if (state.charts[canvasId]) {
+                state.charts[canvasId].destroy();
+            }
+            const ctx = canvasElem.getContext('2d');
+            if (!ctx) return;
+            state.charts[canvasId] = new Chart(ctx, { type, data, options });
+        }
+
+        function initAiCoach() {
+            const form = document.getElementById('ai-chat-form');
+            const input = document.getElementById('ai-user-input');
+            const chatContainer = document.getElementById('chat-messages');
+
+            if (!form || !input || !chatContainer) return;
+
+            const appendMessage = (sender, text) => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'flex items-start space-x-3 my-2';
+                
+                if (sender === 'user') {
+                    msgDiv.innerHTML = `
+                        <div class="flex-1"></div>
+                        <div class="bg-indigo-600 text-white p-3.5 rounded-2xl max-w-xl text-xs leading-relaxed font-medium shadow-md">
+                            ${text}
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">EP</div>
+                    `;
+                } else {
+                    msgDiv.innerHTML = `
+                        <div class="w-8 h-8 rounded-lg bg-fuchsia-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">AI</div>
+                        <div class="bg-slate-100 dark:bg-slate-800/90 p-3.5 rounded-2xl max-w-2xl text-xs leading-relaxed text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/50 flex flex-col space-y-2">
+                            <div>${text}</div>
+                            <div class="pt-2 flex items-center justify-between border-t border-slate-200 dark:border-slate-700/60">
+                                <em class="text-slate-400 text-[11px]">Personalized data analytics & wellness recommendations.</em>
+                                <button class="speak-msg-btn text-fuchsia-600 dark:text-fuchsia-400 hover:opacity-80 text-xs flex items-center gap-1 font-semibold">
+                                    <i class="fa-solid fa-volume-high"></i> Listen
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                chatContainer.appendChild(msgDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                return msgDiv;
+            };
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const userPrompt = input.value.trim();
+                if (!userPrompt) return;
+
+                appendMessage('user', userPrompt);
+                input.value = '';
+
+                const summary = computeSummaryMetrics(state.filteredDataset);
+
+                const loadingMsg = appendMessage('ai', '<span class="italic text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Gemini AI is analyzing your dataset & request...</span>');
+
+                try {
+                    const responseText = await getGeminiOrLocalResponse(userPrompt, summary);
+                    loadingMsg.remove();
+                    appendMessage('ai', responseText);
+                } catch (err) {
+                    loadingMsg.remove();
+                    appendMessage('ai', generateComprehensiveHealthAnswer(userPrompt, summary));
+                }
+            });
+
+            document.querySelectorAll('.ai-prompt-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    input.value = btn.innerText;
+                });
+            });
+        }
+
+        async function getGeminiOrLocalResponse(prompt, summary) {
+            const apiKey = state.geminiApiKey || ""; 
+            
+            const systemPrompt = `You are a Senior AI Personal Health & Wellness Coach analyzing Emily Park's 2025 wellness dataset.
+Emily Park's calculated aggregate metrics for the selected timeframe (${state.filteredDataset.length} recorded days):
+- Average Daily Steps: ${summary.avgSteps || 0} steps
+- Total Covered Distance: ${summary.totalDistance || 0} km
+- Average Sleep Duration: ${summary.avgSleepHours || 0} hours (National benchmark: ~7.5 hours)
+- Average Sleep Quality Score: ${summary.avgSleepScore || 0} / 100
+- Average Deep Sleep Percentage: ${summary.avgDeepSleepPct || 0}%
+- Average HRV (Heart Rate Variability): ${summary.avgHRV || 0} ms
+- Average Resting Heart Rate: ${summary.avgRestingHR || 0} bpm
+- Average Stress Score: ${summary.avgStress || 0} / 10
+- Average Daily Water Intake: ${summary.avgWater || 0} Liters
+- Latest Morning Weight: ${summary.latestWeight || 62} kg
+- Average Active Calories Burned: ${summary.avgCalories || 0} kcal
+- Preferred Language: ${state.currentLang} (IMPORTANT: If language is 'hi', answer in clear, fluent Hindi. If 'es', in Spanish. If 'fr', in French. Otherwise in English).
+
+GUIDELINES FOR RESPONSE:
+1. Directly answer the user's question using Emily's specific metric numbers shown above whenever applicable.
+2. Provide precise, actionable wellness insights (e.g., bedtime advice, recovery strategies, workout balance).
+3. Use HTML tags like <strong>, <ul>, <li>, and <br> for clean formatting. Do NOT output raw markdown star symbols (**).
+4. Maintain a warm, encouraging, and professional tone. Always emphasize non-diagnostic self-tracking advice.`;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            try {
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const candidate = data.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        let text = candidate.content.parts[0].text;
+                        text = text
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n\n/g, '<br><br>')
+                            .replace(/\n/g, '<br>');
+                        return text;
+                    }
+                }
+            } catch (err) {
+                console.warn('Gemini API call failed or offline, executing fallback engine:', err);
+            }
+            
+            return generateComprehensiveHealthAnswer(prompt, summary);
+        }
+
+        function generateComprehensiveHealthAnswer(prompt, summary) {
+            const q = prompt.toLowerCase();
+            const lang = state.currentLang;
+
+            if (lang === 'hi') {
+                if (q.includes('sleep') || q.includes('नींद') || q.includes('सोना')) {
+                    return `<strong>नींद का सटीक विश्लेषण:</strong><br>आपकी वर्तमान चुनी गई समयावधि में औसतन <strong>${summary.avgSleepHours} घंटे</strong> की नींद रिकॉर्ड की गई है, जिसका नींद गुणवत्ता स्कोर <strong>${summary.avgSleepScore}/100</strong> और गहरी नींद (Deep Sleep) <strong>${summary.avgDeepSleepPct}%</strong> है।<br><br>💡 <strong>सुझाव:</strong><br>• राष्ट्रीय बेंचमार्क (~7.5 घंटे) की तुलना में आप थोड़ी कम नींद ले रही हैं। रोजाना 20-30 मिनट पहले सोने से रिकवरी में बड़ा सुधार होगा।`;
+                }
+                if (q.includes('hrv') || q.includes('stress') || q.includes('तनाव') || q.includes('heart')) {
+                    return `<strong>हृदय गति और तनाव रिकवरी:</strong><br>आपका औसत HRV <strong>${summary.avgHRV} ms</strong> और औसतन विश्राम हृदय गति (Resting HR) <strong>${summary.avgRestingHR} bpm</strong> है। औसत तनाव स्तर <strong>${summary.avgStress}/10</strong> दर्ज किया गया है।<br><br>💡 <strong>रिकवरी रणनीति:</strong><br>• कम नींद वाले दिनों में हृदय गति बढ़ती है। गहरी सांस लेने का अभ्यास और हल्का योग HRV बढ़ाने में मदद करेगा।`;
+                }
+                if (q.includes('step') || q.includes('walk') || q.includes('workout') || q.includes('exercise') || q.includes('कदम') || q.includes('व्यायाम')) {
+                    return `<strong>गतिविधि और वर्कआउट प्रदर्शन:</strong><br>आप औसतन <strong>${summary.avgSteps?.toLocaleString()} कदम/दिन</strong> चल रही हैं और रोजाना <strong>${summary.avgCalories} kcal</strong> बर्न कर रही हैं। औसतन वर्कआउट का समय <strong>${summary.avgExerciseMins} मिनट</strong> है।<br><br>💡 <strong>सुझाव:</strong><br>• आपकी निरंतरता बहुत अच्छी है! अत्यधिक थकान से बचने के लिए सप्ताह में 1-2 दिन रिकवरी स्ट्रेचिंग जरूर करें।`;
+                }
+                return `<strong>वेलनेस सारांश:</strong><br>आपकी चुनी गई समयावधि में औसतन कदम <strong>${summary.avgSteps?.toLocaleString()}</strong>, औसत नींद <strong>${summary.avgSleepHours} घंटे</strong>, तनाव <strong>${summary.avgStress}/10</strong> और HRV <strong>${summary.avgHRV} ms</strong> है। आप मुझसे नींद, वर्कआउट, तनाव या पोषण से जुड़ा कोई भी विशिष्ट सवाल पूछ सकती हैं!`;
+            }
+
+            if (q.includes('sleep') || q.includes('rest') || q.includes('bedtime')) {
+                return `<strong>Sleep & Rest Metrics:</strong><br>Over the selected period, your average sleep duration is <strong>${summary.avgSleepHours} hours</strong> with an average quality score of <strong>${summary.avgSleepScore}/100</strong> (Deep sleep: <strong>${summary.avgDeepSleepPct}%</strong>).<br><br>💡 <strong>Actionable Insight:</strong><br>Compared to the national average of ~7.5 hours, increasing sleep by 25 minutes nightly can improve your HRV recovery index and reduce afternoon fatigue.`;
+            }
+
+            if (q.includes('hrv') || q.includes('stress') || q.includes('heart') || q.includes('recovery')) {
+                return `<strong>HRV & Cardiovascular Recovery:</strong><br>Your average Heart Rate Variability is <strong>${summary.avgHRV} ms</strong> with a resting heart rate of <strong>${summary.avgRestingHR} bpm</strong> and stress score of <strong>${summary.avgStress}/10</strong>.<br><br>💡 <strong>Actionable Insight:</strong><br>On days when stress exceeds 6.0/10, your resting heart rate shows a minor elevation. Incorporate 10 minutes of box breathing before bed.`;
+            }
+
+            if (q.includes('step') || q.includes('walk') || q.includes('activity') || q.includes('workout') || q.includes('exercise') || q.includes('calories')) {
+                return `<strong>Activity & Caloric Output:</strong><br>You are averaging <strong>${summary.avgSteps?.toLocaleString()} steps/day</strong>, covering <strong>${summary.totalDistance} km</strong> total, and burning <strong>${summary.avgCalories} kcal/day</strong> across <strong>${summary.avgExerciseMins} active minutes</strong>.<br><br>💡 <strong>Actionable Insight:</strong><br>Your physical consistency is high! Remember to pair high-intensity workout days with lighter recovery walks to prevent muscle soreness.`;
+            }
+
+            return `<strong>Emily's Wellness Overview:</strong><br>Across your selected dataset period: Average steps stand at <strong>${summary.avgSteps?.toLocaleString()}</strong>, sleep at <strong>${summary.avgSleepHours} hrs</strong>, stress balance at <strong>${summary.avgStress}/10</strong>, and HRV recovery index at <strong>${summary.avgHRV} ms</strong>.<br><br>Feel free to ask specific questions about your sleep quality, HRV recovery, activity levels, or nutrition targets!`;
+        }
+    </script>
+</body>
+</html>
